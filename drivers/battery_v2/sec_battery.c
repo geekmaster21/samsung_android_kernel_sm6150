@@ -6291,14 +6291,20 @@ static int sec_wireless_get_property(struct power_supply *psy,
 		val->intval = (battery->pdata->wireless_charger_name) ?
 			1 : 0;
 		break;
+	case POWER_SUPPLY_PROP_POWER_DESIGN:
+		if (battery->cable_type == SEC_BATTERY_CABLE_PREPARE_WIRELESS_20)
+			val->intval = battery->wc20_power_class;
+		else
+			val->intval = 0;
+		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
 		/* Whatever -> uV */
 		val->intval = battery->input_voltage / (SEC_INPUT_VOLTAGE_5V / 5) * 1000000;
-		return 0;
+		break;
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
 		/* mA -> uA */
 		val->intval = battery->pdata->charging_current[battery->cable_type].input_current_limit * 1000;
-		return 0;
+		break;
 	default:
 		return -EINVAL;
 	}
