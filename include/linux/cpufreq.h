@@ -237,6 +237,22 @@ enum {
 };
 
 int set_freq_limit(unsigned long id, unsigned int freq);
+enum {
+	DVFS_NO_ID			= 0,
+
+	/* need to update now */
+	DVFS_TOUCH_ID			= 0,
+	DVFS_FINGER_ID			= 0,
+	DVFS_ARGOS_ID			= 0,
+
+	DVFS_MAX_ID
+};
+
+static inline set_freq_limit(unsigned long id, unsigned int freq)
+{
+	pr_err("%s is not yet implemented\n", __func__);
+	return 0;
+}
 #endif
 
 /*********************************************************************

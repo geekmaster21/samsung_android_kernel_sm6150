@@ -14,7 +14,7 @@ echo "==> Issue Build Commands"
 echo
 
 mkdir -p out
-export HOME=/home/$USER
+export HOME=/home/phennaux
 export ARCH=arm64
 export SUBARCH=arm64
 export CLANG_PATH=$HOME/Documents/kernel_dev/toolchains/azure-clang/bin
