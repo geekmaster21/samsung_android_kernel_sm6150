@@ -172,6 +172,12 @@ struct drm_panel_esd_config {
 	u32 groups;
 };
 
+#define BRIGHTNESS_ALPHA_PAIR_LEN 2
+struct brightness_alpha_pair {
+	u32 brightness;
+	u32 alpha;
+};
+
 struct dsi_panel {
 	const char *name;
 	const char *type;
@@ -223,15 +229,8 @@ struct dsi_panel {
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
 
-#if defined(CONFIG_DISPLAY_SAMSUNG) || defined(CONFIG_DISPLAY_SAMSUNG_LEGO)
-	void *panel_private;
-	struct device_node *self_display_of_node;
-	struct dsi_parser_utils self_display_utils;
-	struct device_node *mafpc_of_node;
-	struct dsi_parser_utils mafpc_utils;
-	struct device_node *test_mode_of_node;
-	struct dsi_parser_utils test_mode_utils;
-#endif
+	struct brightness_alpha_pair *fod_dim_lut;
+	u32 fod_dim_lut_count;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -362,15 +361,8 @@ int ss_dsi_panel_parse_cmd_sets(struct dsi_panel_cmd_set *cmd_sets,
 int dsi_panel_reset(struct dsi_panel *panel);
 #endif
 
-#if defined(CONFIG_DISPLAY_SAMSUNG_LEGO)
-#define SS_CMD_PROP_STR_LEN (100)
+int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status);
 
-int dsi_panel_set_pinctrl_state(struct dsi_panel *panel, bool enable);
-int dsi_panel_power_on(struct dsi_panel *panel);
-int dsi_panel_power_off(struct dsi_panel *panel);
-int dsi_panel_tx_cmd_set(struct dsi_panel *panel, int type);
-int __ss_dsi_panel_parse_cmd_sets(struct dsi_panel_cmd_set *cmd,
-					int type, struct dsi_parser_utils *utils,
-					char (*ss_cmd_set_prop)[SS_CMD_PROP_STR_LEN]);
-#endif
+u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel);
+
 #endif /* _DSI_PANEL_H_ */
