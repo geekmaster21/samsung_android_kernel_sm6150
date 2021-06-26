@@ -20,6 +20,8 @@ ccflags-y += -I$(srctree)/drivers/clk/qcom/
 ccflags-y += -I$(srctree)/drivers/gpu/drm/msm/samsung_lego
 endif
 
+ccflags-y += -Ofast
+
 msm_drm-y := \
 	dp/dp_usbpd.o \
 	dp/dp_parser.o \
