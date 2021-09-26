@@ -7269,13 +7269,6 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		result = -ENOMEM;
 		goto fail_hdr_offset_cache;
 	}
-	ipa3_ctx->fnr_stats_cache = kmem_cache_create("IPA_FNR_STATS",
-		sizeof(struct ipa_ioc_flt_rt_counter_alloc), 0, 0, NULL);
-	if (!ipa3_ctx->fnr_stats_cache) {
-		IPAERR(":ipa fnr stats cache create failed\n");
-		result = -ENOMEM;
-		goto fail_fnr_stats_cache;
-	}
 	ipa3_ctx->hdr_proc_ctx_cache = kmem_cache_create("IPA_HDR_PROC_CTX",
 		sizeof(struct ipa3_hdr_proc_ctx_entry), 0, 0, NULL);
 	if (!ipa3_ctx->hdr_proc_ctx_cache) {
@@ -7533,8 +7526,6 @@ fail_rt_tbl_cache:
 fail_hdr_proc_ctx_offset_cache:
 	kmem_cache_destroy(ipa3_ctx->hdr_proc_ctx_cache);
 fail_hdr_proc_ctx_cache:
-	kmem_cache_destroy(ipa3_ctx->fnr_stats_cache);
-fail_fnr_stats_cache:
 	kmem_cache_destroy(ipa3_ctx->hdr_offset_cache);
 fail_hdr_offset_cache:
 	kmem_cache_destroy(ipa3_ctx->hdr_cache);
@@ -9319,3 +9310,16 @@ module_param(emulation_type, uint, 0000);
 MODULE_PARM_DESC(
 	emulation_type,
 	"emulation_type=N N can be 13 for IPA 3.5.1, 14 for IPA 4.0, 17 for IPA 4.5");
+#if defined(CONFIG_ARGOS)
+void ipa3_set_napi_chained_rx(bool enable)
+{
+	if (!ipa3_ctx)
+		return;
+
+	if (enable && !ipa3_ctx->enable_napi_chain)
+		ipa3_ctx->enable_napi_chain = 1;
+	else if (!enable && ipa3_ctx->enable_napi_chain)
+		ipa3_ctx->enable_napi_chain = 0;
+}
+EXPORT_SYMBOL(ipa3_set_napi_chained_rx);
+#endif

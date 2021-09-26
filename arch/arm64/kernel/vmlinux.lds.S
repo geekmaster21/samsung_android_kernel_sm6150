@@ -68,12 +68,6 @@ jiffies = jiffies_64;
 #define TRAMP_TEXT
 #endif
 
-#define RTIC_BSS					\
-	. = ALIGN(PAGE_SIZE);				\
-	VMLINUX_SYMBOL(__bss_rtic_start) = .;	\
-	KEEP(*(.bss.rtic))			\
-	. = ALIGN(PAGE_SIZE);				\
-	VMLINUX_SYMBOL(__bss_rtic_end) = .;
 /*
  * The size of the PE/COFF section that covers the kernel image, which
  * runs from stext to _edata, must be a round multiple of the PE/COFF
@@ -232,6 +226,7 @@ SECTIONS
 	BSS_SECTION(0, 0, 0)
 
 	. = ALIGN(PAGE_SIZE);
+#ifndef CONFIG_UH_RKP
 	idmap_pg_dir = .;
 	. += IDMAP_DIR_SIZE;
 	swapper_pg_dir = .;
@@ -246,6 +241,7 @@ SECTIONS
 	tramp_pg_dir = .;
 	. += PAGE_SIZE;
 #endif
+#endif
 
 	__pecoff_data_size = ABSOLUTE(. - __initdata_begin);
 	_end = .;
@@ -253,10 +249,6 @@ SECTIONS
 	STABS_DEBUG
 
 	HEAD_SYMBOLS
-
-	.bss : {			/* bss segment		*/
-         RTIC_BSS
-	}
 }
 
 /*
