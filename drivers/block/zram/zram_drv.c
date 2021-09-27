@@ -1905,7 +1905,6 @@ static ssize_t mm_stat_show(struct device *dev,
 
 	return ret;
 }
-#endif
 
 static ssize_t debug_stat_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
