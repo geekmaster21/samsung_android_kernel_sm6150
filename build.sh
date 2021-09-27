@@ -17,7 +17,7 @@ mkdir -p out
 export HOME=/home/$USER
 export ARCH=arm64
 export SUBARCH=arm64
-export CLANG_PATH=$HOME/Documents/kernel_dev/toolchains/proton-clang/bin
+export CLANG_PATH=$HOME/Documents/kernel_dev/toolchains/azure-clang/bin
 export PATH="$CLANG_PATH:$PATH"
 export CROSS_COMPILE=aarch64-linux-gnu-
 export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
