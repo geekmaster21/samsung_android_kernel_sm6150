@@ -103,7 +103,6 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap, size_t len,
 
 free_buffer:
 	kfree(buffer);
-	ion_debug_heap_usage_show(heap);
 	return ERR_PTR(ret);
 }
 
