@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KERNEL_DEFCONFIG=kaizoku_defconfig
+KERNEL_DEFCONFIG=nova_defconfig
 
 echo
 echo "==> Clean Build Directory"
@@ -22,7 +22,7 @@ export PATH="$CLANG_PATH:$PATH"
 export CROSS_COMPILE=aarch64-linux-gnu-
 export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 export KBUILD_BUILD_USER=OneUI
-export KBUILD_BUILD_HOST=Kaizoku
+export KBUILD_BUILD_HOST=Nova
 
 START=$(date +"%s")
 
