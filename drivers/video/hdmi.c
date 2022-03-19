@@ -704,7 +704,7 @@ static void hdmi_avi_infoframe_log(const char *level,
 
 static const char *hdmi_spd_sdi_get_name(enum hdmi_spd_sdi sdi)
 {
-	if (sdi < 0 || sdi > HDMI_SPD_SDI_MAX)
+	if (sdi < 0 || sdi > 0xff)
 		return "Invalid";
 	switch (sdi) {
 	case HDMI_SPD_SDI_UNKNOWN:
@@ -735,9 +735,8 @@ static const char *hdmi_spd_sdi_get_name(enum hdmi_spd_sdi sdi)
 		return "HD DVD";
 	case HDMI_SPD_SDI_PMP:
 		return "PMP";
-	default:
-		return "Reserved";
 	}
+	return "Reserved";
 }
 
 /**
@@ -848,7 +847,7 @@ hdmi_audio_sample_frequency_get_name(enum hdmi_audio_sample_frequency freq)
 static const char *
 hdmi_audio_coding_type_ext_get_name(enum hdmi_audio_coding_type_ext ctx)
 {
-	if (ctx < 0 || ctx > HDMI_AUDIO_CODING_TYPE_EXT_MAX)
+	if (ctx < 0 || ctx > 0x1f)
 		return "Invalid";
 
 	switch (ctx) {
@@ -872,9 +871,8 @@ hdmi_audio_coding_type_ext_get_name(enum hdmi_audio_coding_type_ext ctx)
 		return "MPEG-4 HE AAC + MPEG Surround";
 	case HDMI_AUDIO_CODING_TYPE_EXT_MPEG4_AAC_LC_SURROUND:
 		return "MPEG-4 AAC LC + MPEG Surround";
-	default:
-		return "Reserved";
 	}
+	return "Reserved";
 }
 
 /**

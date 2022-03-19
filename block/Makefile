@@ -10,7 +10,6 @@ obj-$(CONFIG_BLOCK) := bio.o elevator.o blk-core.o blk-tag.o blk-sysfs.o \
 			blk-mq-sysfs.o blk-mq-cpumap.o blk-mq-sched.o ioctl.o \
 			genhd.o partition-generic.o ioprio.o \
 			badblocks.o partitions/
-CFLAGS_blk-mq.o := $(call cc-disable-warning, align-mismatch)
 
 obj-$(CONFIG_BOUNCE)		+= bounce.o
 obj-$(CONFIG_BLK_SCSI_REQUEST)	+= scsi_ioctl.o
@@ -36,18 +35,3 @@ obj-$(CONFIG_BLK_DEV_ZONED)	+= blk-zoned.o
 obj-$(CONFIG_BLK_WBT)		+= blk-wbt.o
 obj-$(CONFIG_BLK_DEBUG_FS)	+= blk-mq-debugfs.o
 obj-$(CONFIG_BLK_SED_OPAL)	+= sed-opal.o
-obj-$(CONFIG_BLK_INLINE_ENCRYPTION)	+= keyslot-manager.o bio-crypt-ctx.o \
-					   blk-crypto.o
-obj-$(CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK)	+= blk-crypto-fallback.o
-
-# [IOPP-Wformat-v1.0.4.14.patch]
-# check calls to printf and scanf, etc.,
-# to make sure that the arguments supplied have types appropriate to the format string specified,
-# and that the conversions specified in the format string make sense.
-CFLAGS_blk-core.o = -Wformat
-CFLAGS_blk-sysfs.o = -Wformat
-CFLAGS_blk-merge.o = -Wformat
-CFLAGS_elevator.o = -Wformat
-CFLAGS_cfq-iosched.o = -Wformat
-CFLAGS_genhd.o = -Wformat
-

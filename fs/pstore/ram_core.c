@@ -29,8 +29,6 @@
 #include <linux/vmalloc.h>
 #include <asm/page.h>
 
-#include "internal.h"
-
 struct persistent_ram_buffer {
 	uint32_t    sig;
 	atomic_t    start;
@@ -100,23 +98,24 @@ static void notrace persistent_ram_encode_rs8(struct persistent_ram_zone *prz,
 	uint8_t *data, size_t len, uint8_t *ecc)
 {
 	int i;
+	uint16_t par[prz->ecc_info.ecc_size];
 
 	/* Initialize the parity buffer */
-	memset(prz->ecc_info.par, 0,
-	       prz->ecc_info.ecc_size * sizeof(prz->ecc_info.par[0]));
-	encode_rs8(prz->rs_decoder, data, len, prz->ecc_info.par, 0);
+	memset(par, 0, sizeof(par));
+	encode_rs8(prz->rs_decoder, data, len, par, 0);
 	for (i = 0; i < prz->ecc_info.ecc_size; i++)
-		ecc[i] = prz->ecc_info.par[i];
+		ecc[i] = par[i];
 }
 
 static int persistent_ram_decode_rs8(struct persistent_ram_zone *prz,
 	void *data, size_t len, uint8_t *ecc)
 {
 	int i;
+	uint16_t par[prz->ecc_info.ecc_size];
 
 	for (i = 0; i < prz->ecc_info.ecc_size; i++)
-		prz->ecc_info.par[i] = ecc[i];
-	return decode_rs8(prz->rs_decoder, data, prz->ecc_info.par, len,
+		par[i] = ecc[i];
+	return decode_rs8(prz->rs_decoder, data, par, len,
 				NULL, 0, NULL, 0, NULL);
 }
 
@@ -229,15 +228,6 @@ static int persistent_ram_init_ecc(struct persistent_ram_zone *prz,
 		return -EINVAL;
 	}
 
-	/* allocate workspace instead of using stack VLA */
-	prz->ecc_info.par = kmalloc_array(prz->ecc_info.ecc_size,
-					  sizeof(*prz->ecc_info.par),
-					  GFP_KERNEL);
-	if (!prz->ecc_info.par) {
-		pr_err("cannot allocate ECC parity workspace\n");
-		return -ENOMEM;
-	}
-
 	prz->corrected_bytes = 0;
 	prz->bad_blocks = 0;
 
@@ -286,11 +276,6 @@ static int notrace persistent_ram_update_user(struct persistent_ram_zone *prz,
 	struct persistent_ram_buffer *buffer = prz->buffer;
 	int ret = unlikely(__copy_from_user(buffer->data + start, s, count)) ?
 		-EFAULT : 0;
-
-#ifdef CONFIG_PSTORE_PMSG_SSPLOG
-	if (!ret)
-		ss_hook_pmsg(buffer->data + start, count);
-#endif
 	persistent_ram_update_ecc(prz, start, count);
 	return ret;
 }
@@ -545,13 +530,6 @@ void persistent_ram_free(struct persistent_ram_zone *prz)
 		}
 		prz->vaddr = NULL;
 	}
-	if (prz->rs_decoder) {
-		free_rs(prz->rs_decoder);
-		prz->rs_decoder = NULL;
-	}
-	kfree(prz->ecc_info.par);
-	prz->ecc_info.par = NULL;
-
 	persistent_ram_free_old(prz);
 	kfree(prz);
 }

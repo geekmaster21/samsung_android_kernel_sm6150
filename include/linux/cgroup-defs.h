@@ -19,7 +19,6 @@
 #include <linux/percpu-rwsem.h>
 #include <linux/workqueue.h>
 #include <linux/bpf-cgroup.h>
-#include <linux/psi_types.h>
 
 #ifdef CONFIG_CGROUPS
 
@@ -31,7 +30,6 @@ struct kernfs_node;
 struct kernfs_ops;
 struct kernfs_open_file;
 struct seq_file;
-struct poll_table_struct;
 
 #define MAX_CGROUP_TYPE_NAMELEN 32
 #define MAX_CGROUP_ROOT_NAMELEN 64
@@ -64,12 +62,6 @@ enum {
 	 * specified at mount time and thus is implemented here.
 	 */
 	CGRP_CPUSET_CLONE_CHILDREN,
-
-	/* Control group has to be frozen. */
-	CGRP_FREEZE,
-
-	/* Cgroup is frozen. */
-	CGRP_FROZEN,
 };
 
 /* cgroup_root->flags */
@@ -264,25 +256,6 @@ struct css_set {
 	struct rcu_head rcu_head;
 };
 
-struct cgroup_freezer_state {
-	/* Should the cgroup and its descendants be frozen. */
-	bool freeze;
-
-	/* Should the cgroup actually be frozen? */
-	int e_freeze;
-
-	/* Fields below are protected by css_set_lock */
-
-	/* Number of frozen descendant cgroups */
-	int nr_frozen_descendants;
-
-	/*
-	 * Number of tasks, which are counted as frozen:
-	 * frozen, SIGSTOPped, and PTRACEd.
-	 */
-	int nr_frozen_tasks;
-};
-
 struct cgroup {
 	/* self css with NULL ->ss, points back to this cgroup */
 	struct cgroup_subsys_state self;
@@ -401,14 +374,8 @@ struct cgroup {
 	/* used to schedule release agent */
 	struct work_struct release_agent_work;
 
-	/* used to track pressure stalls */
-	struct psi_group psi;
-
 	/* used to store eBPF programs */
 	struct cgroup_bpf bpf;
-
-	/* Used to store internal freezer state */
-	struct cgroup_freezer_state freezer;
 
 	/* ids of the ancestors at each level including self */
 	int ancestor_ids[];
@@ -536,9 +503,6 @@ struct cftype {
 	 */
 	ssize_t (*write)(struct kernfs_open_file *of,
 			 char *buf, size_t nbytes, loff_t off);
-
-	unsigned int (*poll)(struct kernfs_open_file *of,
-			     struct poll_table_struct *pt);
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 	struct lock_class_key	lockdep_key;

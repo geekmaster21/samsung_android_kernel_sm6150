@@ -71,18 +71,15 @@
 
 #define STACK_TOP_MAX		TASK_SIZE_64
 #ifdef CONFIG_COMPAT
-#define AARCH32_KUSER_HELPERS_BASE 0xffff0000
+#define AARCH32_VECTORS_BASE	0xffff0000
 #define STACK_TOP		(test_thread_flag(TIF_32BIT) ? \
-				AARCH32_KUSER_HELPERS_BASE : STACK_TOP_MAX)
+				AARCH32_VECTORS_BASE : STACK_TOP_MAX)
 #else
 #define STACK_TOP		STACK_TOP_MAX
 #endif /* CONFIG_COMPAT */
 
 extern phys_addr_t arm64_dma_phys_limit;
 #define ARCH_LOW_ADDRESS_LIMIT	(arm64_dma_phys_limit - 1)
-
-extern unsigned int boot_reason;
-extern unsigned int cold_boot;
 
 struct debug_info {
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
@@ -222,20 +219,20 @@ extern struct task_struct *cpu_switch_to(struct task_struct *prev,
 #define ARCH_HAS_PREFETCH
 static inline void prefetch(const void *ptr)
 {
-	asm volatile("prfm pldl1keep, [%x0]\n" : : "r" (ptr));
+	asm volatile("prfm pldl1keep, %a0\n" : : "p" (ptr));
 }
 
 #define ARCH_HAS_PREFETCHW
 static inline void prefetchw(const void *ptr)
 {
-	asm volatile("prfm pstl1keep, [%x0]\n" : : "r" (ptr));
+	asm volatile("prfm pstl1keep, %a0\n" : : "p" (ptr));
 }
 
 #define ARCH_HAS_SPINLOCK_PREFETCH
 static inline void spin_lock_prefetch(const void *ptr)
 {
 	asm volatile(ARM64_LSE_ATOMIC_INSN(
-		     "prfm pstl1strm, [%x0]",
+		     "prfm pstl1strm, %a0",
 		     "nop") : : "p" (ptr));
 }
 
@@ -245,14 +242,6 @@ static inline void spin_lock_prefetch(const void *ptr)
 
 void cpu_enable_pan(const struct arm64_cpu_capabilities *__unused);
 void cpu_enable_cache_maint_trap(const struct arm64_cpu_capabilities *__unused);
-
-#ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
-/* PR_{SET,GET}_TAGGED_ADDR_CTRL prctl */
-long set_tagged_addr_ctrl(unsigned long arg);
-long get_tagged_addr_ctrl(void);
-#define SET_TAGGED_ADDR_CTRL(arg)	set_tagged_addr_ctrl(arg)
-#define GET_TAGGED_ADDR_CTRL()		get_tagged_addr_ctrl()
-#endif
 
 #endif /* __ASSEMBLY__ */
 #endif /* __ASM_PROCESSOR_H */

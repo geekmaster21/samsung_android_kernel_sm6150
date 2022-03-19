@@ -22,7 +22,6 @@
 #include <linux/writeback.h>
 #include <linux/frontswap.h>
 #include <linux/blkdev.h>
-#include <linux/psi.h>
 #include <linux/uio.h>
 #include <linux/sched/task.h>
 #include <asm/pgtable.h>
@@ -63,12 +62,9 @@ void end_swap_bio_write(struct bio *bio)
 		 * Also clear PG_reclaim to avoid rotate_reclaimable_page()
 		 */
 		set_page_dirty(page);
-#ifndef CONFIG_ZRAM
-		pr_alert_ratelimited("Write-error on swap-device (%u:%u:%llu)\n",
-			 MAJOR(bio_dev(bio)),
-			 MINOR(bio_dev(bio)),
+		pr_alert("Write-error on swap-device (%u:%u:%llu)\n",
+			 MAJOR(bio_dev(bio)), MINOR(bio_dev(bio)),
 			 (unsigned long long)bio->bi_iter.bi_sector);
-#endif
 		ClearPageReclaim(page);
 	}
 	end_page_writeback(page);
@@ -79,7 +75,6 @@ static void swap_slot_free_notify(struct page *page)
 {
 	struct swap_info_struct *sis;
 	struct gendisk *disk;
-	swp_entry_t entry;
 
 	/*
 	 * There is no guarantee that the page is in swap cache - the software
@@ -111,11 +106,11 @@ static void swap_slot_free_notify(struct page *page)
 	 * we again wish to reclaim it.
 	 */
 	disk = sis->bdev->bd_disk;
-	entry.val = page_private(page);
-	if (disk->fops->swap_slot_free_notify &&
-			__swap_count(sis, entry) == 1) {
+	if (disk->fops->swap_slot_free_notify) {
+		swp_entry_t entry;
 		unsigned long offset;
 
+		entry.val = page_private(page);
 		offset = swp_offset(entry);
 
 		SetPageDirty(page);
@@ -347,26 +342,17 @@ out:
 	return ret;
 }
 
-int swap_readpage(struct page *page, bool synchronous)
+int swap_readpage(struct page *page, bool do_poll)
 {
 	struct bio *bio;
 	int ret = 0;
 	struct swap_info_struct *sis = page_swap_info(page);
 	blk_qc_t qc;
 	struct gendisk *disk;
-	unsigned long pflags;
 
-	VM_BUG_ON_PAGE(!PageSwapCache(page) && !synchronous, page);
+	VM_BUG_ON_PAGE(!PageSwapCache(page), page);
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageUptodate(page), page);
-
-	/*
-	 * Count submission time as memory stall. When the device is congested,
-	 * or the submitting cgroup IO-throttled, submission can be a
-	 * significant part of overall IO time.
-	 */
-	psi_memstall_enter(&pflags);
-
 	if (frontswap_load(page) == 0) {
 		SetPageUptodate(page);
 		unlock_page(page);
@@ -380,7 +366,7 @@ int swap_readpage(struct page *page, bool synchronous)
 		ret = mapping->a_ops->readpage(swap_file, page);
 		if (!ret)
 			count_vm_event(PSWPIN);
-		goto out;
+		return ret;
 	}
 
 	ret = bdev_read_page(sis->bdev, map_swap_page(page, &sis->bdev), page);
@@ -391,7 +377,7 @@ int swap_readpage(struct page *page, bool synchronous)
 		}
 
 		count_vm_event(PSWPIN);
-		goto out;
+		return 0;
 	}
 
 	ret = 0;
@@ -412,7 +398,7 @@ int swap_readpage(struct page *page, bool synchronous)
 	count_vm_event(PSWPIN);
 	bio_get(bio);
 	qc = submit_bio(bio);
-	while (synchronous) {
+	while (do_poll) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		if (!READ_ONCE(bio->bi_private))
 			break;
@@ -424,7 +410,6 @@ int swap_readpage(struct page *page, bool synchronous)
 	bio_put(bio);
 
 out:
-	psi_memstall_leave(&pflags);
 	return ret;
 }
 
